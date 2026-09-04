@@ -1,0 +1,17 @@
+{
+  "name": "anime-episode-tracker",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A Firefox extension for tracking watched anime episodes.",
+  "scripts": {
+    "test": "node --test",
+    "lint": "web-ext lint --source-dir extension",
+    "start": "web-ext run --source-dir extension",
+    "build": "web-ext build --source-dir extension --artifacts-dir web-ext-artifacts --overwrite-dest"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1",
+    "web-ext": "10.6.0"
+  }
+}

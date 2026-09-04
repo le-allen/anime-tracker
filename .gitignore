@@ -1,0 +1,5 @@
+node_modules/
+web-ext-artifacts/
+coverage/
+.DS_Store
+STATUS.md
