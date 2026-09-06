@@ -140,6 +140,37 @@ test("shows validation errors while editing an invalid pause point", async () =>
   assert.match(document.querySelector(".pause-error").textContent, /between 1 and 26/);
 });
 
+test("saves, opens, validates, and clears an anime watch link", async () => {
+  const entry = sampleEntry();
+  const browser = createMockBrowser({ sync: { [entryKey(1)]: entry } });
+  const { app, document } = setup({ browser });
+  await app.init();
+
+  document.querySelector('[data-action="edit-watch-link"]').click();
+  const input = document.querySelector("[data-watch-url]");
+  input.value = "not a link";
+  document.querySelector('[data-action="save-watch-link"]').click();
+  await settle();
+  assert.equal(document.querySelector(".watch-link-error").hidden, false);
+  assert.equal(app.state.entries[0].watchUrl, undefined);
+
+  input.value = "https://watch.example/anime/cowboy-bebop";
+  document.querySelector('[data-action="save-watch-link"]').click();
+  await settle();
+
+  assert.equal(app.state.entries[0].watchUrl, "https://watch.example/anime/cowboy-bebop");
+  const link = document.querySelector(".watch-link");
+  assert.equal(link.href, "https://watch.example/anime/cowboy-bebop");
+  assert.equal(link.target, "_blank");
+  assert.match(link.getAttribute("rel"), /noopener/);
+
+  document.querySelector('[data-action="edit-watch-link"]').click();
+  document.querySelector('[data-action="clear-watch-link"]').click();
+  await settle();
+  assert.equal(app.state.entries[0].watchUrl, "");
+  assert.equal(document.querySelector(".watch-link-empty").textContent, "No watch link saved");
+});
+
 test("shows local fallback and AniList error states", async () => {
   const browser = createMockBrowser({ syncFailures: { get: true } });
   const { app, document } = setup({

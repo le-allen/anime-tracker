@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export const FILTERS = Object.freeze(["all", "planned", "watching", "completed"]);
 
 export function chooseTitle(title = {}) {
@@ -18,6 +18,7 @@ export function createEntry(media, now = Date.now()) {
     watchedEpisodes: 0,
     pausedEpisode: null,
     pausedAtSeconds: null,
+    watchUrl: "",
     format: media.format || null,
     seasonYear: Number.isInteger(media.seasonYear) ? media.seasonYear : null,
     releaseStatus: media.status || null,
@@ -92,6 +93,36 @@ export function clearPausePoint(entry, now = Date.now()) {
     pausedAtSeconds: null,
     updatedAt: now,
   };
+}
+
+export function setWatchUrl(entry, requestedUrl, now = Date.now()) {
+  const value = String(requestedUrl).trim();
+  if (!value) {
+    return clearWatchUrl(entry, now);
+  }
+
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new TypeError("Enter a valid website link.");
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new TypeError("The watch link must start with http:// or https://.");
+  }
+
+  const watchUrl = url.href;
+  if (watchUrl === entry.watchUrl) {
+    return entry;
+  }
+  return { ...entry, schemaVersion: SCHEMA_VERSION, watchUrl, updatedAt: now };
+}
+
+export function clearWatchUrl(entry, now = Date.now()) {
+  if (!entry.watchUrl) {
+    return entry;
+  }
+  return { ...entry, schemaVersion: SCHEMA_VERSION, watchUrl: "", updatedAt: now };
 }
 
 export function hasPausePoint(entry) {

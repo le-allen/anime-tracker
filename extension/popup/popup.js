@@ -1,6 +1,7 @@
 import { searchAnime } from "../modules/anilist.js";
 import {
   clearPausePoint,
+  clearWatchUrl,
   chooseTitle,
   createEntry,
   deriveStatus,
@@ -9,6 +10,7 @@ import {
   hasPausePoint,
   progressPercent,
   setPausePoint,
+  setWatchUrl,
   setWatchedEpisodes,
   updateEntryMetadata,
 } from "../modules/model.js";
@@ -28,6 +30,7 @@ export function createPopupApp({
     filter: "all",
     pendingRemovalId: null,
     pauseEditorId: null,
+    watchLinkEditorId: null,
     searchResults: [],
     searchTimer: null,
     searchController: null,
@@ -56,6 +59,7 @@ export function createPopupApp({
       state.filter = button.dataset.filter;
       state.pendingRemovalId = null;
       state.pauseEditorId = null;
+      state.watchLinkEditorId = null;
       renderList();
     });
     elements.animeList.addEventListener("click", handleListClick);
@@ -69,6 +73,12 @@ export function createPopupApp({
       } else if (event.key === "Escape" && event.target.matches("[data-pause-episode], [data-pause-time]")) {
         event.preventDefault();
         event.target.closest(".anime-card")?.querySelector('[data-action="cancel-pause"]')?.click();
+      } else if (event.key === "Enter" && event.target.matches("[data-watch-url]")) {
+        event.preventDefault();
+        event.target.closest(".anime-card")?.querySelector('[data-action="save-watch-link"]')?.click();
+      } else if (event.key === "Escape" && event.target.matches("[data-watch-url]")) {
+        event.preventDefault();
+        event.target.closest(".anime-card")?.querySelector('[data-action="cancel-watch-link"]')?.click();
       }
     });
     elements.searchInput.addEventListener("input", queueSearch);
@@ -152,6 +162,7 @@ export function createPopupApp({
     if (button.dataset.action === "remove") {
       state.pendingRemovalId = id;
       state.pauseEditorId = null;
+      state.watchLinkEditorId = null;
       renderList();
       return;
     }
@@ -173,6 +184,7 @@ export function createPopupApp({
     }
     if (button.dataset.action === "edit-pause") {
       state.pauseEditorId = id;
+      state.watchLinkEditorId = null;
       state.pendingRemovalId = null;
       renderList();
       elements.animeList.querySelector(`[data-anime-id="${id}"] [data-pause-episode]`)?.focus();
@@ -203,6 +215,37 @@ export function createPopupApp({
     if (button.dataset.action === "clear-pause") {
       state.pauseEditorId = null;
       await saveEntry(clearPausePoint(entry), "The pause point could not be cleared.");
+      return;
+    }
+    if (button.dataset.action === "edit-watch-link") {
+      state.watchLinkEditorId = id;
+      state.pauseEditorId = null;
+      state.pendingRemovalId = null;
+      renderList();
+      elements.animeList.querySelector(`[data-anime-id="${id}"] [data-watch-url]`)?.focus();
+      return;
+    }
+    if (button.dataset.action === "cancel-watch-link") {
+      state.watchLinkEditorId = null;
+      renderList();
+      return;
+    }
+    if (button.dataset.action === "save-watch-link") {
+      const card = button.closest(".anime-card");
+      try {
+        const updated = setWatchUrl(entry, card.querySelector("[data-watch-url]").value);
+        state.watchLinkEditorId = null;
+        await saveEntry(updated, "The watch link could not be saved.");
+      } catch (error) {
+        const errorElement = card.querySelector(".watch-link-error");
+        errorElement.textContent = error.message;
+        errorElement.hidden = false;
+      }
+      return;
+    }
+    if (button.dataset.action === "clear-watch-link") {
+      state.watchLinkEditorId = null;
+      await saveEntry(clearWatchUrl(entry), "The watch link could not be cleared.");
       return;
     }
 
@@ -324,7 +367,7 @@ export function createPopupApp({
       `${entry.watchedEpisodes} / ${entry.totalEpisodes ?? "?"}`,
     );
     progressRow.append(progress, count);
-    content.append(progressRow, renderPausePoint(entry), renderCardActions(entry));
+    content.append(progressRow, renderWatchLink(entry), renderPausePoint(entry), renderCardActions(entry));
     card.append(content);
     return card;
   }
@@ -422,6 +465,54 @@ export function createPopupApp({
     );
     section.classList.add("pause-section-editing");
     section.append(fields, help, error, editorActions);
+    return section;
+  }
+
+  function renderWatchLink(entry) {
+    const section = createElement(doc, "div", "watch-link-section");
+    if (state.watchLinkEditorId !== entry.anilistId) {
+      if (entry.watchUrl) {
+        const link = withText(createElement(doc, "a", "watch-link"), "Watch");
+        link.href = entry.watchUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.setAttribute("aria-label", `Watch ${entry.title}`);
+        section.append(
+          link,
+          actionButton("Edit link", "edit-watch-link", entry.anilistId, "watch-link-edit-button"),
+        );
+      } else {
+        section.append(
+          withText(createElement(doc, "span", "watch-link-empty"), "No watch link saved"),
+          actionButton("Add link", "edit-watch-link", entry.anilistId, "watch-link-edit-button"),
+        );
+      }
+      return section;
+    }
+
+    const input = createElement(doc, "input", "watch-link-input");
+    input.type = "url";
+    input.placeholder = "https://example.com/anime/...";
+    input.value = entry.watchUrl || "";
+    input.autocomplete = "url";
+    input.spellcheck = false;
+    input.dataset.watchUrl = String(entry.anilistId);
+    input.setAttribute("aria-label", `Watch link for ${entry.title}`);
+
+    const error = createElement(doc, "span", "watch-link-error");
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+
+    const editorActions = createElement(doc, "div", "watch-link-editor-actions");
+    if (entry.watchUrl) {
+      editorActions.append(actionButton("Clear", "clear-watch-link", entry.anilistId, "watch-link-clear-button"));
+    }
+    editorActions.append(
+      actionButton("Cancel", "cancel-watch-link", entry.anilistId, "cancel-button"),
+      actionButton("Save", "save-watch-link", entry.anilistId, "watch-link-save-button"),
+    );
+    section.classList.add("watch-link-section-editing");
+    section.append(input, error, editorActions);
     return section;
   }
 

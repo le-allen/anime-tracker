@@ -7,6 +7,7 @@ A small Firefox extension for finding anime through AniList and tracking watched
 - Search AniList without creating an account.
 - Add anime and increment, decrement, or directly edit episode progress.
 - Save the exact episode and timestamp where you paused, then edit or clear the resume point later.
+- Save a link to the page where you watch each anime and open it directly from the tracker.
 - Automatically group titles as Planned, Watching, or Completed.
 - Save each title with Firefox Sync and retain a local fallback when Sync is unavailable.
 - Follow the Firefox light or dark theme.

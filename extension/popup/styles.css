@@ -310,6 +310,90 @@ progress::-moz-progress-bar {
   padding-top: 8px;
 }
 
+.watch-link-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.watch-link-section-editing {
+  display: grid;
+  justify-content: stretch;
+}
+
+.watch-link,
+.watch-link-empty {
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.watch-link {
+  color: var(--accent);
+  font-weight: 750;
+}
+
+.watch-link-empty {
+  color: var(--muted);
+}
+
+.watch-link-input {
+  width: 100%;
+  height: 29px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 7px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 11px;
+}
+
+.watch-link-error {
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.watch-link-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.watch-link-edit-button,
+.watch-link-clear-button,
+.watch-link-save-button {
+  min-height: 27px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 8px;
+  background: var(--surface-muted);
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.watch-link-edit-button {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.watch-link-clear-button {
+  margin-right: auto;
+  color: var(--danger);
+}
+
+.watch-link-save-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
 .pause-section-editing {
   display: grid;
   justify-content: stretch;

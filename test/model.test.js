@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   clearPausePoint,
+  clearWatchUrl,
   chooseTitle,
   createEntry,
   deriveStatus,
@@ -12,6 +13,7 @@ import {
   parseTimestamp,
   progressPercent,
   setPausePoint,
+  setWatchUrl,
   setWatchedEpisodes,
   updateEntryMetadata,
 } from "../extension/modules/model.js";
@@ -36,7 +38,7 @@ test("creates a compact, versioned entry from AniList metadata", () => {
   }, 1234);
 
   assert.deepEqual(entry, {
-    schemaVersion: 2,
+    schemaVersion: 3,
     anilistId: 1,
     title: "Cowboy Bebop",
     coverUrl: "cover.jpg",
@@ -44,6 +46,7 @@ test("creates a compact, versioned entry from AniList metadata", () => {
     watchedEpisodes: 0,
     pausedEpisode: null,
     pausedAtSeconds: null,
+    watchUrl: "",
     format: "TV",
     seasonYear: 1998,
     releaseStatus: "FINISHED",
@@ -73,8 +76,13 @@ test("supports unbounded progress when AniList has no episode total", () => {
   assert.equal(progressPercent(updated), 0);
 });
 
-test("refreshes metadata without losing watched progress", () => {
-  const existing = sampleEntry({ watchedEpisodes: 12, pausedEpisode: 13, pausedAtSeconds: 754 });
+test("refreshes metadata without losing user tracking data", () => {
+  const existing = sampleEntry({
+    watchedEpisodes: 12,
+    pausedEpisode: 13,
+    pausedAtSeconds: 754,
+    watchUrl: "https://example.com/cowboy-bebop",
+  });
   const updated = updateEntryMetadata(existing, {
     id: 1,
     title: { english: "Cowboy Bebop (Updated)" },
@@ -88,6 +96,7 @@ test("refreshes metadata without losing watched progress", () => {
   assert.equal(updated.watchedEpisodes, 12);
   assert.equal(updated.pausedEpisode, 13);
   assert.equal(updated.pausedAtSeconds, 754);
+  assert.equal(updated.watchUrl, "https://example.com/cowboy-bebop");
   assert.equal(updated.title, "Cowboy Bebop (Updated)");
   assert.equal(updated.updatedAt, 999);
 });
@@ -96,7 +105,7 @@ test("sets, formats, and clears an episode pause point", () => {
   const entry = sampleEntry({ watchedEpisodes: 4 });
   const paused = setPausePoint(entry, "5", "12:34", 500);
 
-  assert.equal(paused.schemaVersion, 2);
+  assert.equal(paused.schemaVersion, 3);
   assert.equal(paused.pausedEpisode, 5);
   assert.equal(paused.pausedAtSeconds, 754);
   assert.equal(paused.watchedEpisodes, 4);
@@ -108,6 +117,21 @@ test("sets, formats, and clears an episode pause point", () => {
   assert.equal(cleared.pausedEpisode, null);
   assert.equal(cleared.pausedAtSeconds, null);
   assert.equal(hasPausePoint(cleared), false);
+});
+
+test("validates, normalizes, and clears a watch link", () => {
+  const entry = sampleEntry();
+  const updated = setWatchUrl(entry, " https://example.com/watch/1 ", 500);
+
+  assert.equal(updated.schemaVersion, 3);
+  assert.equal(updated.watchUrl, "https://example.com/watch/1");
+  assert.equal(updated.updatedAt, 500);
+  assert.throws(() => setWatchUrl(entry, "not a link"), /valid website link/);
+  assert.throws(() => setWatchUrl(entry, "javascript:alert(1)"), /http:\/\//);
+
+  const cleared = clearWatchUrl(updated, 600);
+  assert.equal(cleared.watchUrl, "");
+  assert.equal(cleared.updatedAt, 600);
 });
 
 test("supports hour timestamps and rejects invalid pause points", () => {
