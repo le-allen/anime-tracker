@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 export const FILTERS = Object.freeze(["all", "planned", "watching", "completed"]);
 
 export function chooseTitle(title = {}) {
@@ -19,6 +19,7 @@ export function createEntry(media, now = Date.now()) {
     pausedEpisode: null,
     pausedAtSeconds: null,
     watchUrl: "",
+    watchTitle: "",
     format: media.format || null,
     seasonYear: Number.isInteger(media.seasonYear) ? media.seasonYear : null,
     releaseStatus: media.status || null,
@@ -96,6 +97,10 @@ export function clearPausePoint(entry, now = Date.now()) {
 }
 
 export function setWatchUrl(entry, requestedUrl, now = Date.now()) {
+  return setWatchLink(entry, requestedUrl, undefined, now);
+}
+
+export function setWatchLink(entry, requestedUrl, requestedTitle, now = Date.now()) {
   const value = String(requestedUrl).trim();
   if (!value) {
     return clearWatchUrl(entry, now);
@@ -112,17 +117,20 @@ export function setWatchUrl(entry, requestedUrl, now = Date.now()) {
   }
 
   const watchUrl = url.href;
-  if (watchUrl === entry.watchUrl) {
+  const watchTitle = requestedTitle === undefined && watchUrl === entry.watchUrl
+    ? String(entry.watchTitle || "").trim()
+    : String(requestedTitle || "").trim();
+  if (watchUrl === entry.watchUrl && watchTitle === (entry.watchTitle || "")) {
     return entry;
   }
-  return { ...entry, schemaVersion: SCHEMA_VERSION, watchUrl, updatedAt: now };
+  return { ...entry, schemaVersion: SCHEMA_VERSION, watchUrl, watchTitle, updatedAt: now };
 }
 
 export function clearWatchUrl(entry, now = Date.now()) {
-  if (!entry.watchUrl) {
+  if (!entry.watchUrl && !entry.watchTitle) {
     return entry;
   }
-  return { ...entry, schemaVersion: SCHEMA_VERSION, watchUrl: "", updatedAt: now };
+  return { ...entry, schemaVersion: SCHEMA_VERSION, watchUrl: "", watchTitle: "", updatedAt: now };
 }
 
 export function hasPausePoint(entry) {
@@ -133,7 +141,9 @@ export function hasPausePoint(entry) {
 }
 
 export function parseTimestamp(value) {
-  const parts = String(value).trim().split(":");
+  const normalized = String(value).trim();
+  const compactMatch = normalized.match(/^(\d+)(\d{2})$/);
+  const parts = compactMatch ? [compactMatch[1], compactMatch[2]] : normalized.split(":");
   if (parts.length < 2 || parts.length > 3 || parts.some((part) => !/^\d+$/.test(part))) {
     return null;
   }

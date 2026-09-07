@@ -333,8 +333,12 @@ progress::-moz-progress-bar {
 }
 
 .watch-link {
+  flex: 1;
+  overflow: hidden;
   color: var(--accent);
   font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .watch-link-empty {

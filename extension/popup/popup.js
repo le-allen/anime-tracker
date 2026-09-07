@@ -10,6 +10,7 @@ import {
   hasPausePoint,
   progressPercent,
   setPausePoint,
+  setWatchLink,
   setWatchUrl,
   setWatchedEpisodes,
   updateEntryMetadata,
@@ -248,6 +249,24 @@ export function createPopupApp({
       await saveEntry(clearWatchUrl(entry), "The watch link could not be cleared.");
       return;
     }
+    if (button.dataset.action === "add-current-tab") {
+      button.disabled = true;
+      button.textContent = "Saving…";
+      try {
+        const [tab] = await browserApi.tabs.query({ active: true, currentWindow: true });
+        if (!tab?.url) {
+          throw new Error("The current tab link is unavailable.");
+        }
+        await saveEntry(
+          setWatchLink(entry, tab.url, tab.title),
+          "The current tab link could not be saved.",
+        );
+      } catch (error) {
+        showAppError(error.message || "The current tab link could not be saved.");
+        renderList();
+      }
+      return;
+    }
 
     if (button.dataset.action === "increment" || button.dataset.action === "decrement") {
       const adjustment = button.dataset.action === "increment" ? 1 : -1;
@@ -448,7 +467,7 @@ export function createPopupApp({
 
     const help = withText(
       createElement(doc, "span", "pause-help"),
-      "Use MM:SS or HH:MM:SS",
+      "Use MM:SS, HH:MM:SS, or MMSS",
     );
     help.id = `pause-help-${entry.anilistId}`;
     const error = createElement(doc, "span", "pause-error");
@@ -472,7 +491,7 @@ export function createPopupApp({
     const section = createElement(doc, "div", "watch-link-section");
     if (state.watchLinkEditorId !== entry.anilistId) {
       if (entry.watchUrl) {
-        const link = withText(createElement(doc, "a", "watch-link"), "Watch");
+        const link = withText(createElement(doc, "a", "watch-link"), watchLinkTitle(entry));
         link.href = entry.watchUrl;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
@@ -484,7 +503,7 @@ export function createPopupApp({
       } else {
         section.append(
           withText(createElement(doc, "span", "watch-link-empty"), "No watch link saved"),
-          actionButton("Add link", "edit-watch-link", entry.anilistId, "watch-link-edit-button"),
+          actionButton("Add link", "add-current-tab", entry.anilistId, "watch-link-edit-button"),
         );
       }
       return section;
@@ -618,6 +637,17 @@ function formatSearchMetadata(media) {
 function defaultPausedEpisode(entry) {
   const nextEpisode = Math.max(1, entry.watchedEpisodes + 1);
   return entry.totalEpisodes ? Math.min(nextEpisode, entry.totalEpisodes) : nextEpisode;
+}
+
+function watchLinkTitle(entry) {
+  if (entry.watchTitle?.trim()) {
+    return entry.watchTitle.trim();
+  }
+  try {
+    return new URL(entry.watchUrl).hostname;
+  } catch {
+    return entry.title;
+  }
 }
 
 function formatLabel(value) {

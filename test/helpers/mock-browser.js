@@ -44,8 +44,18 @@ export class MemoryStorageArea {
   }
 }
 
-export function createMockBrowser({ local = {}, sync = {}, syncFailures = {} } = {}) {
+export function createMockBrowser({
+  local = {},
+  sync = {},
+  syncFailures = {},
+  activeTab = { title: "Cowboy Bebop - Episode 1", url: "https://watch.example/anime/cowboy-bebop" },
+} = {}) {
   return {
+    tabs: {
+      async query() {
+        return activeTab ? [structuredClone(activeTab)] : [];
+      },
+    },
     storage: {
       local: new MemoryStorageArea(local),
       sync: new MemoryStorageArea(sync, syncFailures),
@@ -69,4 +79,3 @@ export function sampleEntry(overrides = {}) {
     ...overrides,
   };
 }
-

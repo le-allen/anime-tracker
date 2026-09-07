@@ -107,7 +107,7 @@ test("saves and clears an episode pause point without changing watched progress"
   const timeInput = document.querySelector("[data-pause-time]");
   assert.equal(episodeInput.value, "5");
   episodeInput.value = "5";
-  timeInput.value = "12:34";
+  timeInput.value = "1234";
   document.querySelector('[data-action="save-pause"]').click();
   await settle();
 
@@ -140,8 +140,31 @@ test("shows validation errors while editing an invalid pause point", async () =>
   assert.match(document.querySelector(".pause-error").textContent, /between 1 and 26/);
 });
 
-test("saves, opens, validates, and clears an anime watch link", async () => {
+test("captures the current tab as a watch link and uses its title", async () => {
   const entry = sampleEntry();
+  const browser = createMockBrowser({
+    sync: { [entryKey(1)]: entry },
+    activeTab: {
+      title: "Cowboy Bebop Episode 5 - Example Stream",
+      url: "https://watch.example/anime/cowboy-bebop/5",
+    },
+  });
+  const { app, document } = setup({ browser });
+  await app.init();
+
+  document.querySelector('[data-action="add-current-tab"]').click();
+  await settle();
+
+  assert.equal(app.state.entries[0].watchUrl, "https://watch.example/anime/cowboy-bebop/5");
+  assert.equal(app.state.entries[0].watchTitle, "Cowboy Bebop Episode 5 - Example Stream");
+  assert.equal(document.querySelector(".watch-link").textContent, "Cowboy Bebop Episode 5 - Example Stream");
+});
+
+test("opens, validates, and clears an anime watch link", async () => {
+  const entry = sampleEntry({
+    watchUrl: "https://watch.example/anime/cowboy-bebop/1",
+    watchTitle: "Cowboy Bebop Episode 1",
+  });
   const browser = createMockBrowser({ sync: { [entryKey(1)]: entry } });
   const { app, document } = setup({ browser });
   await app.init();
@@ -152,7 +175,7 @@ test("saves, opens, validates, and clears an anime watch link", async () => {
   document.querySelector('[data-action="save-watch-link"]').click();
   await settle();
   assert.equal(document.querySelector(".watch-link-error").hidden, false);
-  assert.equal(app.state.entries[0].watchUrl, undefined);
+  assert.equal(app.state.entries[0].watchUrl, "https://watch.example/anime/cowboy-bebop/1");
 
   input.value = "https://watch.example/anime/cowboy-bebop";
   document.querySelector('[data-action="save-watch-link"]').click();

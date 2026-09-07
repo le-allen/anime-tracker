@@ -13,6 +13,7 @@ import {
   parseTimestamp,
   progressPercent,
   setPausePoint,
+  setWatchLink,
   setWatchUrl,
   setWatchedEpisodes,
   updateEntryMetadata,
@@ -38,7 +39,7 @@ test("creates a compact, versioned entry from AniList metadata", () => {
   }, 1234);
 
   assert.deepEqual(entry, {
-    schemaVersion: 3,
+    schemaVersion: 4,
     anilistId: 1,
     title: "Cowboy Bebop",
     coverUrl: "cover.jpg",
@@ -47,6 +48,7 @@ test("creates a compact, versioned entry from AniList metadata", () => {
     pausedEpisode: null,
     pausedAtSeconds: null,
     watchUrl: "",
+    watchTitle: "",
     format: "TV",
     seasonYear: 1998,
     releaseStatus: "FINISHED",
@@ -105,7 +107,7 @@ test("sets, formats, and clears an episode pause point", () => {
   const entry = sampleEntry({ watchedEpisodes: 4 });
   const paused = setPausePoint(entry, "5", "12:34", 500);
 
-  assert.equal(paused.schemaVersion, 3);
+  assert.equal(paused.schemaVersion, 4);
   assert.equal(paused.pausedEpisode, 5);
   assert.equal(paused.pausedAtSeconds, 754);
   assert.equal(paused.watchedEpisodes, 4);
@@ -123,7 +125,7 @@ test("validates, normalizes, and clears a watch link", () => {
   const entry = sampleEntry();
   const updated = setWatchUrl(entry, " https://example.com/watch/1 ", 500);
 
-  assert.equal(updated.schemaVersion, 3);
+  assert.equal(updated.schemaVersion, 4);
   assert.equal(updated.watchUrl, "https://example.com/watch/1");
   assert.equal(updated.updatedAt, 500);
   assert.throws(() => setWatchUrl(entry, "not a link"), /valid website link/);
@@ -134,7 +136,23 @@ test("validates, normalizes, and clears a watch link", () => {
   assert.equal(cleared.updatedAt, 600);
 });
 
+test("stores a title with a captured watch link", () => {
+  const entry = sampleEntry();
+  const updated = setWatchLink(
+    entry,
+    "https://example.com/watch/1",
+    "Cowboy Bebop Episode 1",
+    500,
+  );
+
+  assert.equal(updated.watchUrl, "https://example.com/watch/1");
+  assert.equal(updated.watchTitle, "Cowboy Bebop Episode 1");
+  assert.equal(updated.updatedAt, 500);
+});
+
 test("supports hour timestamps and rejects invalid pause points", () => {
+  assert.equal(parseTimestamp("1234"), 754);
+  assert.equal(formatTimestamp(parseTimestamp("1234")), "12:34");
   assert.equal(parseTimestamp("1:02:03"), 3723);
   assert.equal(formatTimestamp(3723), "1:02:03");
   assert.equal(parseTimestamp("72:05"), 4325);
