@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { JSDOM } from "jsdom";
 
-import { createPopupApp } from "../extension/popup/popup.js";
+import { createPopupApp, resolveExtensionApi } from "../extension/popup/popup.js";
 import { entryKey } from "../extension/modules/storage.js";
 import { createMockBrowser, sampleEntry } from "./helpers/mock-browser.js";
 
@@ -29,6 +29,14 @@ function searchResponse(media) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+test("uses either the Firefox or Chrome extension API namespace", () => {
+  const firefoxApi = { name: "firefox" };
+  const chromeApi = { name: "chrome" };
+
+  assert.equal(resolveExtensionApi({ browser: firefoxApi, chrome: chromeApi }), firefoxApi);
+  assert.equal(resolveExtensionApi({ chrome: chromeApi }), chromeApi);
+});
 
 test("links the support button to the GitHub repository", () => {
   const { document } = setup();

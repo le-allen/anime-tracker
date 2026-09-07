@@ -17,9 +17,13 @@ import {
 } from "../modules/model.js";
 import { createStorageAdapter } from "../modules/storage.js";
 
+export function resolveExtensionApi(scope = globalThis) {
+  return scope.browser ?? scope.chrome;
+}
+
 export function createPopupApp({
   doc = document,
-  browserApi = browser,
+  browserApi = resolveExtensionApi(),
   fetchImpl = fetch,
   setTimer = setTimeout,
   clearTimer = clearTimeout,
@@ -657,6 +661,7 @@ function formatLabel(value) {
   return value ? value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "";
 }
 
-if (typeof document !== "undefined" && typeof browser !== "undefined") {
-  createPopupApp().init();
+const extensionApi = resolveExtensionApi();
+if (typeof document !== "undefined" && extensionApi) {
+  createPopupApp({ browserApi: extensionApi }).init();
 }

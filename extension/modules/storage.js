@@ -8,7 +8,7 @@ export function entryKey(anilistId) {
 
 export function createStorageAdapter(browserApi) {
   if (!browserApi?.storage?.local || !browserApi?.storage?.sync) {
-    throw new Error("Firefox extension storage is unavailable.");
+    throw new Error("Browser extension storage is unavailable.");
   }
 
   const local = browserApi.storage.local;
@@ -181,4 +181,3 @@ function isEntry(value) {
     && typeof value.title === "string"
     && Number.isFinite(Number(value.updatedAt));
 }
-

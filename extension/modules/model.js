@@ -190,9 +190,9 @@ export function deriveStatus(entry) {
 
 export function filterAndSortEntries(entries, filter = "all") {
   const normalizedFilter = FILTERS.includes(filter) ? filter : "all";
-  return entries
+  return [...entries]
     .filter((entry) => normalizedFilter === "all" || deriveStatus(entry) === normalizedFilter)
-    .toSorted((left, right) => (
+    .sort((left, right) => (
       right.updatedAt - left.updatedAt || left.title.localeCompare(right.title)
     ));
 }
