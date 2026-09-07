@@ -365,6 +365,11 @@ export function createPopupApp({
     const card = createElement(doc, "article", "anime-card");
     card.dataset.animeId = String(entry.anilistId);
     card.append(renderCover(entry.coverUrl, entry.title));
+    if (state.pendingRemovalId !== entry.anilistId) {
+      const remove = actionButton("×", "remove", entry.anilistId, "remove-button");
+      remove.setAttribute("aria-label", `Remove ${entry.title}`);
+      card.append(remove);
+    }
 
     const content = createElement(doc, "div", "card-content");
     content.append(
@@ -418,9 +423,7 @@ export function createPopupApp({
     increase.setAttribute("aria-label", `Increase watched episodes for ${entry.title}`);
     increase.disabled = Boolean(entry.totalEpisodes && entry.watchedEpisodes >= entry.totalEpisodes);
 
-    const remove = actionButton("×", "remove", entry.anilistId, "remove-button");
-    remove.setAttribute("aria-label", `Remove ${entry.title}`);
-    actions.append(decrease, input, increase, remove);
+    actions.append(decrease, input, increase);
     return actions;
   }
 

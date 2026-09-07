@@ -30,6 +30,15 @@ function searchResponse(media) {
   });
 }
 
+test("links the support button to the GitHub repository", () => {
+  const { document } = setup();
+  const supportLink = document.querySelector("#support-link");
+
+  assert.equal(supportLink.href, "https://github.com/le-allen/anime-tracker");
+  assert.equal(supportLink.target, "_blank");
+  assert.match(supportLink.rel, /noopener/);
+});
+
 test("renders a persisted entry and updates progress from the controls", async () => {
   const entry = sampleEntry();
   const browser = createMockBrowser({ sync: { [entryKey(1)]: entry } });
@@ -38,6 +47,7 @@ test("renders a persisted entry and updates progress from the controls", async (
 
   assert.match(document.querySelector("#entry-summary").textContent, /1 anime/);
   assert.equal(document.querySelector(".card-title").textContent, "Cowboy Bebop");
+  assert.ok(document.querySelector(".anime-card > .remove-button"));
 
   document.querySelector('[data-action="increment"]').click();
   await settle();

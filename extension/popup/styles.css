@@ -61,7 +61,8 @@ button {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+a:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 2px;
 }
@@ -122,6 +123,9 @@ h2 {
 
 .primary-button,
 .secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 34px;
   border: 0;
   border-radius: 9px;
@@ -143,6 +147,27 @@ h2 {
 .secondary-button {
   border: 1px solid var(--border);
   background: var(--surface);
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid var(--border);
+  padding: 6px 12px;
+  background: var(--background);
+}
+
+.support-button {
+  min-height: 24px;
+  padding: 3px 8px;
+  color: var(--muted);
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.support-button:hover {
+  background: var(--surface-muted);
 }
 
 .notice {
@@ -210,6 +235,10 @@ h2 {
   box-shadow: var(--shadow);
 }
 
+.anime-card {
+  position: relative;
+}
+
 .cover,
 .cover-placeholder {
   grid-row: 1 / span 2;
@@ -241,6 +270,11 @@ h2 {
   line-height: 1.3;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.anime-card .card-title,
+.anime-card .card-meta {
+  padding-right: 32px;
 }
 
 .card-meta,
@@ -528,9 +562,11 @@ progress::-moz-progress-bar {
 }
 
 .remove-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
   width: 29px;
   height: 29px;
-  margin-left: auto;
   border-color: transparent;
   border-radius: 8px;
   background: transparent;
