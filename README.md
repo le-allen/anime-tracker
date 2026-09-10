@@ -2,6 +2,8 @@
 
 A small Firefox and Chrome extension for finding anime through AniList and tracking watched episodes from the toolbar.
 
+![image](media/example.png)
+
 ## Features
 
 - Search AniList without creating an account.
